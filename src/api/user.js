@@ -1,6 +1,5 @@
 import request from '@/utils/request'
-import request1 from '@/utils/mockrequest'
-
+import request1 from     '@/utils/mockrequest'
 export function login(data) {
   return request({
     url: '/login',
@@ -9,14 +8,13 @@ export function login(data) {
   })
 }
 
-export function getInfo(uid, token) {
+export function getInfo( token) {
   return request({
-    url: `/userinfo?uid=${uid}`,
+    url: `/admininfo`,
     method: 'get',
     headers: {
       'Authorization': token
     }
-    // params: { token }
   })
 }
 

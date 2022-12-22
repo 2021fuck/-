@@ -18,8 +18,7 @@
   </div>
 </template>
 <script>
-/*elementui文档
-* */
+
 import { mapGetters } from 'vuex'
 import Logo from './Logo'
 import SidebarItem from './SidebarItem'

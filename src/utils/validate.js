@@ -14,14 +14,7 @@ export function isExternal(path) {
  * @param {string} str
  * @returns {boolean}
  */
-import { login_mock } from '@/api/user'
 export function validUsername(str) {
-login_mock({
-    username: 'admin',
-    password: '111111'
-  })
-
-  // return valid_map.indexOf(str.trim()) >= 0
-  //这里只是用于初步判定，判断是否满足某种格式，格式正确，将发送给服务器判断，然后根据返回结果做出下一步操作
-  return 1>=0
+  var reg = /^[A-Za-z0-9\u4e00-\u9fa5]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/
+  return reg.test(str)
 }

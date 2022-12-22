@@ -3,41 +3,58 @@
     <el-button type="primary" @click="handleAddRole">新增角色</el-button>
 
     <el-table :data="rolesList" style="width: 100%;margin-top:30px;" border>
-      <el-table-column align="center" label="Role Key" width="220">
+      <el-table-column align="center" label="RoleId" width="220">
         <template slot-scope="scope">
-          {{ scope.row.key }}
+          {{ scope.row.RoleId }}
         </template>
       </el-table-column>
       <el-table-column align="center" label="角色名称" width="220">
         <template slot-scope="scope">
-          {{ scope.row.name }}
+          {{ scope.row.Name }}
         </template>
       </el-table-column>
       <el-table-column align="header-center" label="权限描述">
         <template slot-scope="scope">
-          {{ scope.row.description }}
+          {{ scope.row.Description }}
         </template>
       </el-table-column>
-      <el-table-column align="center" label="Operations">
+      <el-table-column align="header-center" label="创建时间">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" @click="handleEdit(scope)">编辑</el-button>
+          {{ scope.row.Ctime }}
+        </template>
+      </el-table-column>
+      <el-table-column align="header-center" label="权限标识">
+        <template slot-scope="scope">
+          {{ scope.row.PermissionId }}
+        </template>
+      </el-table-column>
+
+      <el-table-column align="center" label="操作">
+        <template slot-scope="scope">
+          <el-button type="primary" size="small" @click="handleEdit(scope)">修改</el-button>
           <el-button type="danger" size="small" @click="handleDelete(scope)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
 
+<!--  点击新增角色时弹出的对话框  -->
     <el-dialog :visible.sync="dialogVisible" :title="dialogType==='edit'?'Edit Role':'New Role'">
       <el-form :model="role" label-width="80px" label-position="left">
-        <el-form-item label="Name">
-          <el-input v-model="role.name" placeholder="Role Name" />
+        <el-form-item label="ID">
+          <el-input v-model="role.RoleId"  />
         </el-form-item>
-        <el-form-item label="Desc">
+        <el-form-item label="名称">
+          <el-input v-model="role.Name"  />
+        </el-form-item>
+        <el-form-item label="权限描述">
           <el-input
-            v-model="role.description"
+            v-model="role.Description"
             :autosize="{ minRows: 2, maxRows: 4}"
             type="textarea"
-            placeholder="Role Description"
           />
+        </el-form-item>
+        <el-form-item label="Orders">
+          <el-input v-model="role.Orders" />
         </el-form-item>
         <el-form-item label="Menus">
           <el-tree
@@ -48,23 +65,26 @@
             show-checkbox
             node-key="path"
             class="permission-tree"
+            default-expand-all=true
           />
         </el-form-item>
       </el-form>
       <div style="text-align:right;">
         <el-button type="danger" @click="dialogVisible=false">取消</el-button>
-        <el-button type="primary" @click="confirmRole">Confirm</el-button>
+        <el-button type="primary" @click="confirmRole">提交</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
-
+import path from 'path'
+import { deepClone } from '@/utils'
+import { role_search ,role_add,role_del,role_update,path_search} from '@/api/permisson'
 const defaultRole = {
-  key: '',
-  name: '',
-  description: '',
+  RoleId: '',
+  Name: '',
+  Description: '',
   routes: []
 }
 
@@ -95,35 +115,27 @@ export default {
   },
   methods: {
     async getRoutes() {
-      const res = await getRoutes()
-      this.serviceRoutes = res.data
-      this.routes = this.generateRoutes(res.data)
+      const res = await path_search()
+      this.serviceRoutes = res.data.list
+      this.routes = this.generateRoutes(res.data.list)
     },
     async getRoles() {
-      const res = await getRoles()
-      this.rolesList = res.data
+      const res = await role_search()
+      this.rolesList = res.data.list
     },
-
     // Reshape the routes structure so that it looks the same as the sidebar
     generateRoutes(routes, basePath = '/') {
       const res = []
-
       for (let route of routes) {
-        // skip some route
-        if (route.hidden) { continue }
-
+        //如果不是只有一个孩子要展示 就返回false
         const onlyOneShowingChild = this.onlyOneShowingChild(route.children, route)
-
-        if (route.children && onlyOneShowingChild && !route.alwaysShow) {
+        if (route.children && onlyOneShowingChild ) {
           route = onlyOneShowingChild
         }
-
         const data = {
           path: path.resolve(basePath, route.path),
           title: route.meta && route.meta.title
-
         }
-
         // recursive child routes
         if (route.children) {
           data.children = this.generateRoutes(route.children, data.path)
@@ -146,6 +158,7 @@ export default {
       return data
     },
     handleAddRole() {
+      //浅复制一个对象
       this.role = Object.assign({}, defaultRole)
       if (this.$refs.tree) {
         this.$refs.tree.setCheckedNodes([])
@@ -166,17 +179,17 @@ export default {
       })
     },
     handleDelete({ $index, row }) {
-      this.$confirm('Confirm to remove the role?', 'Warning', {
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel',
+      this.$confirm('确认移除这个角色吗', 'Warning', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
         type: 'warning'
       })
         .then(async() => {
-          await deleteRole(row.key)
+          await role_del(row.RoleId)
           this.rolesList.splice($index, 1)
           this.$message({
             type: 'success',
-            message: 'Delete succed!'
+            message: '删除成功!'
           })
         })
         .catch(err => { console.error(err) })
@@ -231,10 +244,12 @@ export default {
         type: 'success'
       })
     },
-    // reference: src/view/layout/components/Sidebar/SidebarItem.vue
-    onlyOneShowingChild(children = [], parent) {
+    onlyOneShowingChild(showingChildren = [], parent) {
+      console.log("&&&&&&&")
+      console.log(showingChildren)
+      console.log(parent)
       let onlyOneChild = null
-      const showingChildren = children.filter(item => !item.hidden)
+      // const showingChildren = children.filter(item => !item.hidden)
 
       // When there is only one child route, the child route is displayed by default
       if (showingChildren.length === 1) {

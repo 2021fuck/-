@@ -7,7 +7,7 @@ import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
-
+//白名单
 const whiteList = ['/login','/register'] // no redirect whitelist
 
 //前置守卫
@@ -22,7 +22,7 @@ router.beforeEach(async(to, from, next) => {
   const hasToken = getToken()
 
   if (hasToken) {
-    if (to.path === '/login'||to.path==='/register') {
+    if (to.path === '/login') {
       //如果已经登录，再次点击登录或注册按钮，路由会重定向到首页
       // if is logged in, redirect to the home page
       next({ path: '/' })

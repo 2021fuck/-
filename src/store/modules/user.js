@@ -2,12 +2,12 @@ import { login, getInfo} from '@/api/user'
 // import { elem } from 'svgo/lib/svgo/jsAPI'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import { resetRouter } from '@/router'
-
+import { path_search ,role_search} from '@/api/permisson'
 const getDefaultState = () => {
   return {
     Uid: '',
     Info: [],
-    token:getToken()
+    token:null
   }
 }
 
@@ -33,45 +33,34 @@ const actions = {
   async login({ commit }, userInfo) {
     const { username, password } = userInfo
     let result = await login({ email: username.trim(), passwd: password })
-      // console.log(result)
-      if (result.code === 200) {
-        setToken(result.token)
-        commit('SET_TOKEN', result.token)
-        commit('SET_UID', result.uid)
+    const res=result.data
+      if (result.status === 200) {
+        setToken(res.token)
+        commit('SET_TOKEN', res.token)
+        commit('SET_UID', res.uid)
       }else{
         return Promise.reject(new Error('faile'))
     }
   },
 
-  // get user info
+  // 获取用户信息
   async getInfo({ commit, state }) {
-      let result =await getInfo(state.Uid, state.token)
-    if (result.code==200){
-      commit('SET_INFO',result.list)
+      let result =await getInfo(state.token)
+    const res=result.data
+
+    if (result.status==200){
+      commit('SET_INFO',res.list)
     }else {
       return Promise.reject(new Error('falie'))
     }
   },
-
-  // user logout
-  // logout({ commit, state }) {
-  //   return new Promise((resolve, reject) => {
-  //     logout(state.token).then(() => {
-  //       removeToken() // must remove  token  first
-  //       resetRouter()
-  //       commit('RESET_STATE')
-  //       resolve()
-  //     }).catch(error => {
-  //       reject(error)
-  //     })
-  //   })
-  // },
+  //退出登录
 logout({commit}){
   removeToken() // must remove  token  first
         resetRouter()
         commit('RESET_STATE')
 },
-  // remove token
+  // 删除token
   resetToken({ commit }) {
     return new Promise(resolve => {
       removeToken() // must remove  token  first
@@ -80,16 +69,10 @@ logout({commit}){
     })
   }
 }
-const getters = {
-  getjwt: (state) => {
-    return state.token
-  }
-}
 export default {
   namespaced: true,
   state,
   mutations,
   actions,
-  getters
 }
 

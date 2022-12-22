@@ -13,7 +13,7 @@
         <el-input
           ref="username"
           v-model="loginForm.username"
-          placeholder="Username"
+          placeholder="Email"
           name="username"
           type="text"
           tabindex="1"
@@ -54,12 +54,13 @@
 
 <script>
 import { validUsername } from '@/utils/validate'
+
 export default {
   name: 'Login',
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
-        callback(new Error('请输入正确的用户名！'))
+        callback(new Error('请输入正确的邮箱！'))
       } else {
         callback()
       }
@@ -73,8 +74,8 @@ export default {
     }
     return {
       loginForm: {
-        username: '',
-        password: ''
+        username: 'admin@qq.com',
+        password: '123456'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -107,9 +108,12 @@ export default {
     handleLogin() {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
+          // let loginData={
+          //   username: this.loginForm.username,
+          //   password: this.$md5(this.loginForm.username)
+          // }
           this.loading = true
           this.$store.dispatch('user/login', this.loginForm).then(() => {
-            // this.$store.dispatch('user/getInfo')
             this.$router.push({ path: this.redirect || '/' })
             this.loading = false
           }).catch(() => {
@@ -120,9 +124,6 @@ export default {
           return false
         }
       })
-    },
-    register(){
-      this.$router.push({path:'/register'})
     }
   }
 }
@@ -230,7 +231,6 @@ $light_gray:#eee;
     right: 10px;
     top: 7px;
     font-size: 16px;
-    //color: $dark_gray;
     color: white;
     cursor: pointer;
     user-select: none;
